@@ -8,6 +8,7 @@ from twilio.rest import TwilioRestClient
 from twilio import twiml
 import logging
 import urllib
+import time
 
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
@@ -67,12 +68,19 @@ class TwilioPhoneCall(AlertPlugin):
         mobiles = [m.prefixed_phone_number for m in mobiles if m.phone_number]
         for mobile in mobiles:
             try:
-                client.calls.create(
+                call = client.calls.create(
                     to=mobile,
                     from_=outgoing_number,
                     url=url,
                     method='GET',
                 )
+                assert call.status == call.QUEUED
+
+                # Looks like this sleep is required for the twilio call
+                # to come through
+                time.sleep(5)
+                call.update_instance()
+                assert call.status == call.COMPLETED
             except Exception, e:
                 logger.exception('Error making twilio phone call: %s' % e)
 
