@@ -12,6 +12,9 @@ import time
 
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
+# The retry count for verifying call status
+RETRY_COUNT = 5
+
 telephone_template = "This is an urgent message from Affirm monitoring. "   \
             "Service \"{{ service.name }}\" is facing an issue. "           \
             "Please check Cabot urgently."
@@ -78,9 +81,17 @@ class TwilioPhoneCall(AlertPlugin):
 
                 # Looks like this sleep is required for the twilio call
                 # to come through
-                time.sleep(5)
-                call.update_instance()
+                count = RETRY_COUNT
+                while count > 0:
+                    time.sleep(5)
+                    call.update_instance()
+                    logger.debug('Call status is: %s' % (call.status))
+                    if call.status == call.COMPLETED:
+                        break
+                    count -= 1
+
                 assert call.status == call.COMPLETED
+
             except Exception, e:
                 logger.exception('Error making twilio phone call: %s' % e)
 
