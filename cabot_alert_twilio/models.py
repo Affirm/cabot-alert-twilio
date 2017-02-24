@@ -94,6 +94,7 @@ class TwilioPhoneCall(AlertPlugin):
 
             except Exception, e:
                 logger.exception('Error making twilio phone call: %s' % e)
+                raise
 
 
 class TwilioSMS(AlertPlugin):
@@ -127,6 +128,7 @@ class TwilioSMS(AlertPlugin):
                 )
             except Exception, e:
                 logger.exception('Error sending twilio sms: %s' % e)
+                raise
 
 
 class TwilioUserData(AlertPluginUserData):
