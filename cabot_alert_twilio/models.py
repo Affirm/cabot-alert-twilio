@@ -5,7 +5,7 @@ from django.conf import settings
 from django.template import Context, Template
 
 from twilio.rest import TwilioRestClient
-from twilio import twiml
+from twilio import twiml, TwilioException
 import logging
 import urllib
 import time
@@ -74,6 +74,7 @@ class TwilioPhoneCall(AlertPlugin):
                 call = client.calls.create(
                     to=mobile,
                     from_=outgoing_number,
+                    if_machine='Hangup',
                     url=url,
                     method='GET',
                 )
@@ -91,6 +92,9 @@ class TwilioPhoneCall(AlertPlugin):
                     count -= 1
 
                 assert call.status == call.COMPLETED
+                
+                if call.answered_by == 'machine':
+                    raise TwilioException('Call reached answering machine.')
 
             except Exception, e:
                 logger.exception('Error making twilio phone call: %s' % e)
