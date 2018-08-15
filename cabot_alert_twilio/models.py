@@ -4,8 +4,8 @@ from django.db import models
 from django.conf import settings
 from django.template import Context, Template
 
-from twilio.rest import TwilioRestClient
-from twilio import twiml, TwilioException
+from twilio.rest import Client, TwilioException
+from twilio.twiml.voice_response import VoiceResponse
 import logging
 import urllib
 import time
@@ -53,18 +53,18 @@ class TwilioPhoneCall(AlertPlugin):
         outgoing_number = env.get('TWILIO_OUTGOING_NUMBER')
 
         # Create a twiml response
-        message = twiml.Response()
+        message = VoiceResponse()
         ctx = Context({'service': service})
         text = Template(telephone_template).render(ctx)
         message.say(text, voice='woman')
 
         params = urllib.urlencode(dict(
-            Twiml=message.toxml(xml_declaration=False)))
+            Twiml=message.to_xml(xml_declaration=False)))
 
         # Use the twimlets service
         url = 'http://twimlets.com/echo?' + params
 
-        client = TwilioRestClient(account_sid, auth_token)
+        client = Client(account_sid, auth_token)
 
         # FIXME: `user` is in fact a `profile`
         mobiles = TwilioUserData.objects.filter(user__user__in=duty_officers)
@@ -85,18 +85,18 @@ class TwilioPhoneCall(AlertPlugin):
                 count = RETRY_COUNT
                 while count > 0:
                     time.sleep(5)
-                    call.update_instance()
+                    call = call.update()
                     logger.debug('Call status is: %s' % (call.status))
                     if call.status == call.COMPLETED:
                         break
                     count -= 1
 
                 assert call.status == call.COMPLETED
-                
+
                 if call.answered_by == 'machine':
                     raise TwilioException('Call reached answering machine.')
 
-            except Exception, e:
+            except Exception as e:
                 logger.exception('Error making twilio phone call: %s' % e)
                 raise
 
@@ -113,8 +113,7 @@ class TwilioSMS(AlertPlugin):
 
         all_users = list(users) + list(duty_officers)
 
-        client = TwilioRestClient(
-            account_sid, auth_token)
+        client = Client(account_sid, auth_token)
         mobiles = TwilioUserData.objects.filter(user__user__in=all_users)
         mobiles = [m.prefixed_phone_number for m in mobiles if m.phone_number]
         c = Context({
@@ -125,12 +124,12 @@ class TwilioSMS(AlertPlugin):
         message = Template(sms_template).render(c)
         for mobile in mobiles:
             try:
-                client.sms.messages.create(
+                client.messages.create(
                     to=mobile,
                     from_=outgoing_number,
                     body=message,
                 )
-            except Exception, e:
+            except Exception as e:
                 logger.exception('Error sending twilio sms: %s' % e)
                 raise
 
