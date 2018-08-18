@@ -78,7 +78,7 @@ class TwilioPhoneCall(AlertPlugin):
                     url=url,
                     method='GET',
                 )
-                assert call.status == call.QUEUED
+                assert call.status == call.Status.QUEUED
 
                 # Looks like this sleep is required for the twilio call
                 # to come through
@@ -87,11 +87,11 @@ class TwilioPhoneCall(AlertPlugin):
                     time.sleep(5)
                     call = call.update()
                     logger.debug('Call status is: %s' % (call.status))
-                    if call.status == call.COMPLETED:
+                    if call.status == call.Status.COMPLETED:
                         break
                     count -= 1
 
-                assert call.status == call.COMPLETED
+                assert call.status == call.Status.COMPLETED
 
                 if call.answered_by == 'machine':
                     raise TwilioException('Call reached answering machine.')
