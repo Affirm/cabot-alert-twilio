@@ -25,7 +25,7 @@ class TestTwilioSMSAlerts(PluginTestCase):
 
     @patch('cabot_alert_twilio.models.Client')
     def test_passing_to_error(self, fake_client_class):
-        self.transition_service(Service.PASSING_STATUS, Service.ERROR_STATUS)
+        self.transition_service_status(Service.PASSING_STATUS, Service.ERROR_STATUS)
         fake_client_class.return_value.messages.create.assert_called_with(
             body='Service Service reporting ERROR status : http://localhost/service/2194/',
             to='+15554443333',
@@ -34,7 +34,7 @@ class TestTwilioSMSAlerts(PluginTestCase):
 
     @patch('cabot_alert_twilio.models.Client')
     def test_error_to_passing(self, fake_client_class):
-        self.transition_service(Service.ERROR_STATUS, Service.PASSING_STATUS)
+        self.transition_service_status(Service.ERROR_STATUS, Service.PASSING_STATUS)
         fake_client_class.return_value.messages.create.assert_called_with(
             body='Service Service is back to normal : http://localhost/service/2194/',
             to='+15554443333',
@@ -71,12 +71,12 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
 
     @patch('cabot_alert_twilio.models.Client')
     def test_passing_to_warning(self, fake_client_class):
-        self.transition_service(Service.PASSING_STATUS, Service.WARNING_STATUS)
+        self.transition_service_status(Service.PASSING_STATUS, Service.WARNING_STATUS)
         self.assertFalse(fake_client_class.return_value.calls.create.called)
 
     @patch('cabot_alert_twilio.models.Client')
     def test_passing_to_error(self, fake_client_class):
-        self.transition_service(Service.PASSING_STATUS, Service.ERROR_STATUS)
+        self.transition_service_status(Service.PASSING_STATUS, Service.ERROR_STATUS)
         self.assertFalse(fake_client_class.return_value.calls.create.called)
 
     @staticmethod
@@ -105,7 +105,7 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
         # both calls get answered (though cabot should stop after the first)
         create_call.side_effect = (self.create_mocked_call(True), self.create_mocked_call(True))
 
-        self.transition_service(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
+        self.transition_service_status(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
         self.assertTrue(create_call.called)
 
         msg = 'This is an urgent message from Affirm monitoring. Service "Service" is facing an issue. ' \
@@ -123,7 +123,7 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
         # first caller won't answer, next one will
         create_call.side_effect = (self.create_mocked_call(False), self.create_mocked_call(True))
 
-        self.transition_service(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
+        self.transition_service_status(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
         self.assertTrue(create_call.called)
 
         msg = 'This is an urgent message from Affirm monitoring. Service "Service" is facing an issue. ' \
