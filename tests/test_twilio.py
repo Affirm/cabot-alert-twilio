@@ -106,7 +106,6 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
         create_call.side_effect = (self.create_mocked_call(True), self.create_mocked_call(True))
 
         self.transition_service_status(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
-        self.assertTrue(create_call.called)
 
         msg = 'This is an urgent message from Affirm monitoring. Service "Service" is facing an issue. ' \
               'Please check Cabot urgently.'
@@ -124,7 +123,6 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
         create_call.side_effect = (self.create_mocked_call(False), self.create_mocked_call(True))
 
         self.transition_service_status(Service.PASSING_STATUS, Service.CRITICAL_STATUS)
-        self.assertTrue(create_call.called)
 
         msg = 'This is an urgent message from Affirm monitoring. Service "Service" is facing an issue. ' \
               'Please check Cabot urgently.'
