@@ -1,5 +1,6 @@
 from os import environ as env
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.template import Context, Template
@@ -134,9 +135,21 @@ class TwilioSMS(AlertPlugin):
                 raise
 
 
+def validate_phone_number(phone_number):
+    if any(not n.isdigit() for n in phone_number):
+        raise ValidationError('Phone number should only contain numbers. '
+                              'Format: CNNNNNNNNNN, where C is the country code (1 for USA)')
+
+    # 10 digit phone number + 1+ digit country code
+    if 0 < len(phone_number) < 11:
+        raise ValidationError('Phone number should include a country code. '
+                              'Format: CNNNNNNNNNN, where C is the country code (1 for USA)')
+
+
 class TwilioUserData(AlertPluginUserData):
     name = "Twilio Plugin"
-    phone_number = models.CharField(max_length=30, blank=True, null=True)
+    phone_number = models.CharField(max_length=30, blank=True, null=True, validators=[validate_phone_number])
+    alert_classes = [TwilioSMS, TwilioPhoneCall]
 
     def save(self, *args, **kwargs):
         if str(self.phone_number).startswith('+'):
@@ -146,3 +159,6 @@ class TwilioUserData(AlertPluginUserData):
     @property
     def prefixed_phone_number(self):
         return '+%s' % self.phone_number
+
+    def is_configured(self):
+        return bool(self.phone_number)
