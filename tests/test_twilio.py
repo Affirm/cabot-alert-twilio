@@ -41,6 +41,11 @@ class TestTwilioSMSAlerts(PluginTestCase):
             from_=self.from_number
         )
 
+    @patch('cabot_alert_twilio.models.Client')
+    def test_error_to_acked(self, fake_client_class):
+        self.transition_service_status(Service.ERROR_STATUS, Service.ACKED_STATUS)
+        self.assertFalse(fake_client_class.return_value.messages.create.called)
+
 
 class TestTwilioPhoneCallAlerts(PluginTestCase):
     def setUp(self):
@@ -70,14 +75,11 @@ class TestTwilioPhoneCallAlerts(PluginTestCase):
         return endpoint + urllib.urlencode(dict(Twiml=response.to_xml(xml_declaration=False)))
 
     @patch('cabot_alert_twilio.models.Client')
-    def test_passing_to_warning(self, fake_client_class):
-        self.transition_service_status(Service.PASSING_STATUS, Service.WARNING_STATUS)
-        self.assertFalse(fake_client_class.return_value.calls.create.called)
-
-    @patch('cabot_alert_twilio.models.Client')
-    def test_passing_to_error(self, fake_client_class):
-        self.transition_service_status(Service.PASSING_STATUS, Service.ERROR_STATUS)
-        self.assertFalse(fake_client_class.return_value.calls.create.called)
+    def test_passing_to_noncritical(self, fake_client_class):
+        """should only call for critical status"""
+        for to_status in Service.WARNING_STATUS, Service.ERROR_STATUS, Service.ACKED_STATUS:
+            self.transition_service_status(Service.PASSING_STATUS, to_status)
+            self.assertFalse(fake_client_class.return_value.calls.create.called)
 
     @staticmethod
     def create_mocked_call(answer):

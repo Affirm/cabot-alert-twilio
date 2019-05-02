@@ -107,6 +107,8 @@ class TwilioSMS(AlertPlugin):
     author = "Jonathan Balls"
 
     def send_alert(self, service, users, duty_officers):
+        if service.overall_status == service.ACKED_STATUS:
+            return
 
         account_sid = env.get('TWILIO_ACCOUNT_SID')
         auth_token = env.get('TWILIO_AUTH_TOKEN')
