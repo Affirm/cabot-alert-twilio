@@ -14,7 +14,7 @@ import time
 from cabot.cabotapp.alert import AlertPlugin, AlertPluginUserData
 
 # The retry count for verifying call status
-RETRY_COUNT = 5
+RETRY_COUNT = 7
 
 telephone_template = "This is an urgent message from Affirm monitoring. "   \
             "Service \"{{ service.name }}\" is facing an issue. "           \
